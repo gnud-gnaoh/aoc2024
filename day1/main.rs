@@ -1,5 +1,6 @@
 use std::env;
 use std::fs;
+use std::collections::HashMap;
 
 fn main() {
   let args: Vec<String> = env::args().collect();
@@ -28,9 +29,21 @@ fn main() {
   list1.sort();
   list2.sort();
 
-  let mut ans = 0;
+  let mut ans1 = 0;
   for i in 0..list1.len() {
-    ans += (list1[i] - list2[i]).abs();
+    ans1 += (list1[i] - list2[i]).abs();
   }
-  println!("{}", ans);
+  println!("{}", ans1);
+
+  let mut map2 = HashMap::new();
+  for i in 0..list2.len() {
+    let count = map2.entry(list2[i]).or_insert(0);
+    *count += 1;
+  }
+
+  let mut ans2 = 0;
+  for i in 0..list2.len() {
+    ans2 += list1[i] * map2.get(&list1[i]).unwrap_or(&0);
+  }
+  println!("{}", ans2);
 }
