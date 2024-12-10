@@ -25,19 +25,48 @@ signed main() {
     }
   }
 
-  for (int x : t) {
-    cout << x << ' ';
-  }
-  cout << '\n';
-
   int m = t.size();
-  int pos = find(t.begin(), t.end(), -1) - t.begin();
-  for (int i = m - 1; i >= 0 && pos < i; i--) {
-    if (t[i] != -1) {
-      t[pos] = t[i];
-      t[i] = -1;
-      pos = find(t.begin() + pos + 1, t.end(), -1) - t.begin();
+
+  auto find_loc = [&](int id) {
+    int l = -1, r = -1;
+    for (int i = 0; i < m; i++) {
+      if (t[i] == id) {
+        if (l == -1) l = i;
+        r = i;
+      }
     }
+    return make_pair(l, r);
+  };
+
+  auto find_empty = [&](int len, int l) {
+    for (int i = 0; i + len - 1 < l; i++) {
+      if (t[i] == -1) {
+        bool ok = true;
+        for (int j = 0; j < len; j++) {
+          if (i + j >= l || t[i + j] != -1) {
+            ok = false;
+            break;
+          }
+        }
+        if (ok) return i;
+      }
+    }
+    return -1LL;
+  };
+
+  auto ass = [&](int l, int r, int x) {
+    for (int i = l; i <= r; i++) {
+      t[i] = x;
+    }
+  };
+
+  for (int i = id - 1; i >= 0; i--) {
+    auto [l, r] = find_loc(i);
+    int len = r - l + 1;
+    int nl = find_empty(len, l);
+    if (nl == -1) continue;
+    ass(l, r, -1);
+    ass(nl, nl + len - 1, i);
   }
 
   for (int x : t) {
@@ -47,7 +76,7 @@ signed main() {
 
   int checksum = 0;
   for (int i = 0; i < m; i++) {
-    if (t[i] == -1) break;
+    if (t[i] == -1) continue;
     checksum += t[i] * i;
   }
 
