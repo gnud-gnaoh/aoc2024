@@ -13,7 +13,7 @@ if __name__ == "__main__":
   for i in range(n):
     for j in range(m):
       if not vis[i][j]:
-        print(i, j)
+        print("pos", i, j)
         vis[i][j] = True
         lst = []
         
@@ -28,16 +28,42 @@ if __name__ == "__main__":
               vis[nx][ny] = True
               q.append((nx, ny))
         
-        # print(lst)
         area = len(lst)
-        peri = area * 4
+
+        # idea: count the number of corners instead of sides
+        zero = 0
+        one = 0
+        two = 0
         for x, y in lst:
-          for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
+          cur = 0
+          for dx, dy in [(1, 1), (1, -1), (-1, 1), (-1, -1)]:
             nx, ny = x + dx, y + dy
-            # if can find (nx, ny) in lst, subtract that side
+            nnx, nny = x + dx, y
+            nnnx, nnny = x, y + dy
+            cnt = 0
             if (nx, ny) in lst:
-              peri -= 1
-        
-        ans += area * peri
+              cnt += 1
+            if (nnx, nny) in lst:
+              cnt += 1
+            if (nnnx, nnny) in lst:
+              cnt += 1
+
+            # AX
+            # XX
+            if cnt == 0:
+              zero += 1
+            # AA
+            # AX
+            elif cnt == 2:
+              two += 1
+            # AX
+            # XA
+            elif cnt == 1 and (nx, ny) in lst: # opposite of each other
+              one += 1
+
+        # case 2 will be repeated 3 times
+        corner = zero + two // 3 + one
+        print(area, corner)
+        ans += area * corner
   
   print(ans)
