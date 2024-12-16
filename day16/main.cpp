@@ -35,7 +35,6 @@ signed main() {
   auto start = make_pair(pos, dir);
 
   map<pair<pair<int, int>, pair<int, int>>, int> dist;
-  map<pair<pair<int, int>, pair<int, int>>, pair<pair<int, int>, pair<int, int>>> par;
   priority_queue<state> pq;
   pq.push({pos, dir, 0});
 
@@ -45,11 +44,8 @@ signed main() {
     state cur = pq.top();
     pq.pop();
 
-    cerr << cur.pos.first << " " << cur.pos.second << " " << cur.dir.first << " " << cur.dir.second << " " << cur.cost << endl;
-
     if (cur.pos == end) {
       if (cur.cost < ans) {
-        cout << "found " << cur.pos.first << " " << cur.pos.second << " " << cur.dir.first << " " << cur.dir.second << " " << cur.cost << endl;
         ans = cur.cost;
         ans_state = {cur.pos, cur.dir};
       }
@@ -67,7 +63,6 @@ signed main() {
       next.cost = cost + 1000;
       if (!dist.count({next.pos, next.dir}) || next.cost < dist[{next.pos, next.dir}]) {
         dist[{next.pos, next.dir}] = next.cost;
-        par[{next.pos, next.dir}] = {pos, dir};
         pq.push(next);
       }
     }
@@ -79,7 +74,6 @@ signed main() {
       next.cost = cost + 1000;
       if (!dist.count({next.pos, next.dir}) || next.cost < dist[{next.pos, next.dir}]) {
         dist[{next.pos, next.dir}] = next.cost;
-        par[{next.pos, next.dir}] = {pos, dir};
         pq.push(next);
       }
     }
@@ -93,26 +87,93 @@ signed main() {
       && a[next.pos.first][next.pos.second] != '#' 
       && (!dist.count({next.pos, next.dir}) || next.cost < dist[{next.pos, next.dir}])) {
         dist[{next.pos, next.dir}] = next.cost;
-        par[{next.pos, next.dir}] = {pos, dir};
         pq.push(next);
       }
     }
   }
 
-  // cout << "fin " << ans_state.first.first << " " << ans_state.first.second << " " << ans_state.second.first << " " << ans_state.second.second << endl;
-  assert(par.count(ans_state));
+  cerr << "Ans " << ans << endl;
 
-  vector<pair<pair<int, int>, pair<int, int>>> path;
-  for (auto cur = ans_state; ; cur = par[cur]) {
-    path.push_back(cur);
-    if (cur == start) {
-      break;
+  // dijkstra from end to start
+  int cnt = 0;
+
+  map<pair<pair<int, int>, pair<int, int>>, int> dist2;
+  assert(pq.empty());
+  for (auto dir : vector<pair<int, int>>{{0, 1}, {0, -1}, {1, 0}, {-1, 0}}) {
+    pq.push({end, dir, 0});
+    dist2[{end, dir}] = 0;
+  }
+
+  while (pq.size()) {
+    state cur = pq.top();
+    pq.pop();
+
+    auto [pos, dir, cost] = cur;
+    if (dist2.count({pos, dir}) && cost > dist2[{pos, dir}]) {
+      continue;
+    }
+
+    // rotate
+    {
+      state next = cur;
+      next.dir = {-dir.second, dir.first};
+      next.cost = cost + 1000;
+      if (!dist2.count({next.pos, next.dir}) || next.cost < dist2[{next.pos, next.dir}]) {
+        dist2[{next.pos, next.dir}] = next.cost;
+        pq.push(next);
+      }
+    }
+
+    // rotate other dir
+    {
+      state next = cur;
+      next.dir = {dir.second, -dir.first};
+      next.cost = cost + 1000;
+      if (!dist2.count({next.pos, next.dir}) || next.cost < dist2[{next.pos, next.dir}]) {
+        dist2[{next.pos, next.dir}] = next.cost;
+        pq.push(next);
+      }
+    }
+
+    // move
+    {
+      state next = cur;
+      next.pos = {pos.first + dir.first, pos.second + dir.second};
+      next.cost = cost + 1;
+      if (next.pos.first >= 0 && next.pos.first < n && next.pos.second >= 0 && next.pos.second < n 
+      && a[next.pos.first][next.pos.second] != '#' 
+      && (!dist2.count({next.pos, next.dir}) || next.cost < dist2[{next.pos, next.dir}])) {
+        dist2[{next.pos, next.dir}] = next.cost;
+        pq.push(next);
+      }
     }
   }
-  reverse(path.begin(), path.end());
 
-  // for (auto [pos, dir] : path) {
-  //   cout << pos.first << " " << pos.second << " " << dir.first << " " << dir.second << endl;
-  // }
-  cout << ans;
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      if (a[i][j] != '#') {
+        for (auto dir : vector<pair<int, int>>{{0, 1}, {0, -1}, {1, 0}, {-1, 0}}) {
+          pair<int, int> pos = {i, j};
+          pair<int, int> nxt = {i + dir.first, j + dir.second};
+          if (a[nxt.first][nxt.second] == '#') {
+            continue;
+          }
+          pair<int, int> opp_dir = {-dir.first, -dir.second};
+          if (dist.count({pos, dir}) && dist2.count({nxt, opp_dir})) {
+            if (dist[{pos, dir}] + dist2[{nxt, opp_dir}] + 1 == ans) {
+              cnt++;
+              cerr << "CAC\n";
+              cerr << pos.first << " " << pos.second << " " << dir.first << " " << dir.second << " " << dist[{pos, dir}] << endl;
+              cerr << nxt.first << " " << nxt.second << " " << opp_dir.first << " " << opp_dir.second << " " << dist2[{nxt, opp_dir}] << endl;
+              cerr << "\n";
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // add one for E
+  cout << cnt + 1;
 }
