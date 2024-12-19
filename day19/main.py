@@ -18,23 +18,22 @@ if __name__ == "__main__":
     print(design)
 
     memo = {}
-    def check(i):
+    def ways(i):
       if i >= len(design):
-        return True
+        return 1
       
       if i in memo:
         return memo[i]
 
-      good = False
+      cnt = 0
       for pattern in patterns:
         if design[i:i+len(pattern)] == pattern:
-          good |= check(i+len(pattern))
+          cnt += ways(i+len(pattern))
 
-      memo[i] = good
-      return good
+      memo[i] = cnt
+      return cnt
     
-    if check(0):
-      print("OK ", design)
-      ans += 1
+    print(design, ways(0))
+    ans += ways(0)
 
   print(ans)
