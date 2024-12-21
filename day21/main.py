@@ -41,7 +41,7 @@ def in_keypad(i, j):
   return i >= 0 and i < 2 and j >= 0 and j < 3 and (i, j) != (0, 0)
 
 memo_digit = {}
-# min cost to move from (i, j) to (ii, jj), given last char of the next pad ('A' to press)
+# min cost to move from (i, j) to (ii, jj) and activate, given last char of the next pad ('A' to press)
 def digit_solve(i, j, ii, jj, lst='A'):
   if (i, j) == (ii, jj):
     return key_solve(*pos_keypad[lst], *pos_keypad['A']) # move from lst to 'A' to press
@@ -71,7 +71,7 @@ def digit_solve(i, j, ii, jj, lst='A'):
   return ans
 
 memo_key = {}
-# min cost to move from (i, j) to (ii, jj), n for position, given last char of the next pad ('A' to press)
+# min cost to move from (i, j) to (ii, jj) and activate, n for position, given last char of the next pad ('A' to press)
 def key_solve(i, j, ii, jj, n=25, lst='A'):
   if n == 0:
     return 1 # human press
