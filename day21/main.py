@@ -40,86 +40,79 @@ def in_numpad(i, j):
 def in_keypad(i, j):
   return i >= 0 and i < 2 and j >= 0 and j < 3 and (i, j) != (0, 0)
 
-def dist(a, b):
-  return abs(a[0] - b[0]) + abs(a[1] - b[1])
+memo_digit = {}
+# min cost to move from (i, j) to (ii, jj), given last char of the next pad ('A' to press)
+def digit_solve(i, j, ii, jj, lst='A'):
+  if (i, j) == (ii, jj):
+    return key_solve(*pos_keypad[lst], *pos_keypad['A']) # move from lst to 'A' to press
 
-def move(u, dx, dy, l):
-  # print(u, dx, dy, l)
-  if l == 0:
-    i, j = pos_numpad[u[l]]
-    if dx == 0 and dy == 0:
-      return u
+  if (i, j, ii, jj, lst) in memo_digit:
+    return memo_digit[(i, j, ii, jj, lst)]
+
+  ans = 1e18
+
+  # move up or down
+  if i != ii:
+    if i < ii:
+      if not (i+1 == 3 and j == 0):
+        ans = min(ans, digit_solve(i+1, j, ii, jj, 'v') + key_solve(*pos_keypad[lst], *pos_keypad['v']))
     else:
-      i += dx
-      j += dy
-      if not in_numpad(i, j):
-        return None
-      return (numpad[i][j], u[1], u[2])
+      ans = min(ans, digit_solve(i-1, j, ii, jj, '^') + key_solve(*pos_keypad[lst], *pos_keypad['^']))
 
-  assert(l != 0)
-  i, j = pos_keypad[u[l]] 
-  # press
-  if dx == 0 and dy == 0:
-    ndx, ndy = action_keypad[u[l]]
-    return move(u, ndx, ndy, l-1)
-  else:
-    # move
-    i += dx
-    j += dy
-    if not in_keypad(i, j):
-      return None
+  # move left or right
+  if j != jj:
+    if j < jj:
+      ans = min(ans, digit_solve(i, j+1, ii, jj, '>') + key_solve(*pos_keypad[lst], *pos_keypad['>']))
     else:
-      return u[:l] + (keypad[i][j],) + u[l + 1:]
+      if not (j-1 == 0 and i == 3):
+        ans = min(ans, digit_solve(i, j-1, ii, jj, '<') + key_solve(*pos_keypad[lst], *pos_keypad['<']))
 
-d = {}
-def bfs(st):
-  dd = {st: 0}
-  q = Queue()
-  q.put(st)
-  while not q.empty():
-    u = q.get()
+  memo_digit[(i, j, ii, jj, lst)] = ans
+  return ans
 
-    def dak(dx, dy):
-      v = move(u, dx, dy, 2)
-      if v != None and v not in dd:
-        dd[v] = dd[u] + 1
-        q.put(v)
-        # print(f"{u} -> {v} | {dd[v]}")
-        
-    # ^
-    dak(-1, 0)
-    # v
-    dak(+1, 0)
-    # <
-    dak(0, -1)
-    # >
-    dak(0, +1)
-    # A  
-    dak(0, 0)
+memo_key = {}
+# min cost to move from (i, j) to (ii, jj), n for position, given last char of the next pad ('A' to press)
+def key_solve(i, j, ii, jj, n=25, lst='A'):
+  if n == 0:
+    return 1 # human press
+  
+  if (i, j, ii, jj, n, lst) in memo_key:
+    return memo_key[(i, j, ii, jj, n, lst)]
 
-  return dd
+  if (i, j) == (ii, jj):
+    return key_solve(*pos_keypad[lst], *pos_keypad['A'], n-1) # move from lst to 'A' to press
+
+  ans = 1e18
+
+  # move up or down
+  if i != ii:
+    if i < ii:
+      ans = min(ans, key_solve(i+1, j, ii, jj, n, 'v') + key_solve(*pos_keypad[lst], *pos_keypad['v'], n-1))
+    else:
+      if not (i-1 == 0 and j == 0):
+        ans = min(ans, key_solve(i-1, j, ii, jj, n, '^') + key_solve(*pos_keypad[lst], *pos_keypad['^'], n-1))
+
+  # move left or right
+  if j != jj:
+    if j < jj:
+      ans = min(ans, key_solve(i, j+1, ii, jj, n, '>') + key_solve(*pos_keypad[lst], *pos_keypad['>'], n-1))
+    else:
+      if not (j-1 == 0 and i == 0):
+        ans = min(ans, key_solve(i, j-1, ii, jj, n, '<') + key_solve(*pos_keypad[lst], *pos_keypad['<'], n-1))
+
+  memo_key[(i, j, ii, jj, n, lst)] = ans
+  return ans
 
 def solve(code):
-  lst = ('A', 'A', 'A')
+  lst = 'A'
   ans = 0
   for c in code:
-    ans += d[lst][(c, 'A', 'A')]
-    ans += 1 # press 
-    lst = (c, 'A', 'A')
+    ans += digit_solve(*pos_numpad[lst], *pos_numpad[c]) 
+    lst = c
   return ans
 
 if __name__ == "__main__":
   codes = list(map(lambda x: x.strip(), read_input("day21/input")))
-  
-  # print(move(('A', 'A', 'A'), 0, 0, 2))
-  assert(move(('A', 'A', 'A'), 0, 0, 2) == ('A', 'A', 'A'))
-  
-  # bfs from all states
-  for x in ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', 'A']:
-    for y in ['^', '<', '>', 'v', 'A']:
-      for z in ['^', '<', '>', 'v', 'A']:
-        d[(x, y, z)] = bfs((x, y, z))
-        print(x, y, z, '|', len(d[(x, y, z)]))
 
   ans = 0
   for code in codes:
