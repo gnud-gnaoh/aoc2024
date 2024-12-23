@@ -7,8 +7,6 @@ def read_input(file_path):
 if __name__ == "__main__":
   edges = list(map(lambda x: x.strip().split('-'), read_input("day23/input")))
 
-  print(edges)
-
   nodes = set()
   for edge in edges:
     nodes.add(edge[0])
@@ -32,15 +30,24 @@ if __name__ == "__main__":
     adj[u].append(v)
     adj[v].append(u)
   
-  ans = set()
-  for u in range(n):
-    if nodes[u][0] == 't':
-      for v in adj[u]:
-        for t in adj[v]:
-          for z in adj[t]:
-            if z == u:
-              tmp = [nodes[u], nodes[v], nodes[t]]
-              tmp.sort()
-              ans.add(tuple(tmp))
+  # find the maximal clique of adj
+  def bron_kerbosch(R, P, X, adj, cliques):
+    if not P and not X:
+      cliques.append(R)
+      return
+    for v in P[:]:
+      bron_kerbosch(R + [v], [u for u in P if u in adj[v]], [u for u in X if u in adj[v]], adj, cliques)
+      P.remove(v)
+      X.append(v)
+
+  def find_maximal_clique(adj):
+    cliques = []
+    n = len(adj)
+    bron_kerbosch([], list(range(n)), [], adj, cliques)
+    max_clique = max(cliques, key=len)
+    return max_clique
   
-  print(len(ans))
+  max_clique = find_maximal_clique(adj)
+  max_clique = [nodes[i] for i in max_clique]
+  max_clique.sort()
+  print(','.join(max_clique))
