@@ -39,14 +39,6 @@ def calc(x, y):
       return False
 
   return True
-
-def find(b):
-  for _ in range(100):
-    randx = randint(0, pow(2, b) - 1)
-    randy = randint(0, pow(2, b) - 1)
-    if not calc(randx, randy):
-      return False
-  return True
   
 if __name__ == "__main__":
   inp = read_input("day24/input")
